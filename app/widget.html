@@ -7,83 +7,23 @@
 </head>
 
 <body>
-
-	
-	<p id="1"></p>
-	<script src="https://js.zohostatic.com/support/developer_sdk/v1/js/ZohoDeskClientSDK.min.js"></script>
-	<script>
-	
-	window.onload = function () {
-	 ZOHODESK.extension.onload().then(function (App) {
-		
-		// Event Listeners for Zoho Desk
-
-		// On Ticket Shift (moving from one ticket to another in the left hand sidebar)
-		App.instance.on("ticket_Shift", function(data){
-			document.getElementById("1").innerText = data['ticket_shifted']
-		});
+<script src="https://js.zohostatic.com/support/developer_sdk/v1/js/ZohoDeskClientSDK.min.js"></script>
+<p id="1">A</p>
 
 
-		//Get ticket related data
-		ZOHODESK.get('ticket.email').then(function (res) {
-				//response Handling
-			}).catch(function (err) {
-				//error Handling
-			});
 
-		ZOHODESK.get('user.fullName').then(function(response) {
-			document.getElementById("1").innerText = response['user.fullName']
-			}).catch(function(err){
-			//Error Handling
-			})
-
-
-		/*	
-					//To Set data in Desk UI Client
-					ZOHODESK.set('ticket.comment', { 'content': "Test comment" }).then(function (res) {
-						//response Handling
-					}).catch(function (err) {
-						//error Handling
-					});
-		
-					//Access Data Storage for an extension
-					//Get the saved data of an extension from data storage
-					ZOHODESK.get('database', { 'key': 'key1', 'queriableValue': 'value1' }).then(function (response) {
-						//response Handling
-					}).catch(function (err) {
-						//error Handling
-					})            
-					
-					//Save data in to data staorage
-					ZOHODESK.set('database', { 'key': 'key_1', 'value': { 'id': 123 }, 'queriableValue': 'value1' }).then(function (response) {
-						//response Handling
-					}).catch(function (err) {
-						//error Handling
-					})
-		
-					//Change tabs in ticket detailview
-					ZOHODESK.invoke('ROUTE_TO', 'ticket.attachments');
-		
-					//To Insert the content in the current opened reply editor from extension
-					ZOHODESK.invoke('Insert', 'ticket.replyEditor', { content: "<p>your content</p>" });
-		
-					//To listen to an event in desk
-					App.instance.on('comment_Added', function(data){
-						//data handling 
-					});
-		
-					//To access locale
-					App.locale;
-		
-					//To access localresources
-					App.localeResource            
-						
-					//To Know more on these, please read the documentation
-				*/
-	});
-};
-</script>
-<script src="./js/extension.js" charset="utf-8"></script>
+<div id="footer">
+<table>
+	<tbody>
+		<tr>
+			<td>Ticket Shift</td>
+			<td id="t_shift_cell"></td>
+		</tr>
+	</tbody>
+</table>	
+</div> 
+<script src="./js/zohoUtil.js"></script>
+<script src="./js/extension.js"></script>
 
 
 </body>
