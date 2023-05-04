@@ -8,21 +8,36 @@
 
 <body>
 
-	<h2 id="1">This is a sample App built 1using ZET CLI.</h2>
-
+	
+	<p id="1"></p>
 	<script src="https://js.zohostatic.com/support/developer_sdk/v1/js/ZohoDeskClientSDK.min.js"></script>
 	<script>
+	
 	window.onload = function () {
 	 ZOHODESK.extension.onload().then(function (App) {
 		
+		// Event Listeners for Zoho Desk
+
+		// On Ticket Shift (moving from one ticket to another in the left hand sidebar)
+		App.instance.on("ticket_Shift", function(data){
+			document.getElementById("1").innerText = data['ticket_shifted']
+		});
+
 
 		//Get ticket related data
 		ZOHODESK.get('ticket.email').then(function (res) {
-				document.getElementById("1").innerHTML = res
 				//response Handling
 			}).catch(function (err) {
 				//error Handling
 			});
+
+		ZOHODESK.get('user.fullName').then(function(response) {
+			document.getElementById("1").innerText = response['user.fullName']
+			}).catch(function(err){
+			//Error Handling
+			})
+
+
 		/*	
 					//To Set data in Desk UI Client
 					ZOHODESK.set('ticket.comment', { 'content': "Test comment" }).then(function (res) {
@@ -68,9 +83,8 @@
 	});
 };
 </script>
+<script src="./js/extension.js" charset="utf-8"></script>
 
-	<script src="./js/extension.js" charset="utf-8"></script>
 
 </body>
-
 </html>
