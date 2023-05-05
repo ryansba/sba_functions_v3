@@ -3,28 +3,174 @@
 
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+
 	<title>Zoho Desk - Apps</title>
+
+<!-- alert Stlye -->
+<style>
+	.alert {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  font-size:.8rem;
+}
+</style>
+
+	<style>
+		body {
+			background-color: #f8f9fa;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+		}
+		.status-attr{
+			font-weight:600;
+		}
+		#status-header{
+			background-color: #f8f9fa;
+			font-size:.8rem;
+			width:100%;
+		}
+		.content {
+			padding: 1rem;
+			background-color: #ffffff;
+			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			border-radius: 0.25rem;
+		}
+
+		.list-group {
+  width: 100%;
+
+
+}
+
+.form-check-input:checked + .form-checked-content {
+  opacity: .5;
+}
+
+.form-check-input-placeholder {
+  border-style: dashed;
+}
+[contenteditable]:focus {
+  outline: 0;
+}
+
+.list-group-checkable .list-group-item {
+  cursor: pointer;
+}
+.list-group-item-check {
+  position: absolute;
+  clip: rect(0, 0, 0, 0);
+}
+.list-group-item-check:hover + .list-group-item {
+  background-color: var(--bs-secondary-bg);
+}
+.list-group-item-check:checked + .list-group-item {
+  color: #fff;
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+.list-group-item-check[disabled] + .list-group-item,
+.list-group-item-check:disabled + .list-group-item {
+  pointer-events: none;
+  filter: none;
+  opacity: .5;
+}
+
+.list-group-radio .list-group-item {
+  cursor: pointer;
+  border-radius: .5rem;
+}
+.list-group-radio .form-check-input {
+  z-index: 2;
+  margin-top: -.5em;
+}
+.list-group-radio .list-group-item:hover,
+.list-group-radio .list-group-item:focus {
+  background-color: var(--bs-secondary-bg);
+}
+
+.list-group-radio .form-check-input:checked + .list-group-item {
+  background-color: var(--bs-body);
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 2px var(--bs-primary);
+}
+.list-group-radio .form-check-input[disabled] + .list-group-item,
+.list-group-radio .form-check-input:disabled + .list-group-item {
+  pointer-events: none;
+  filter: none;
+  opacity: .5;
+}
+
+	</style>
 </head>
 
 <body>
-<script src="https://js.zohostatic.com/support/developer_sdk/v1/js/ZohoDeskClientSDK.min.js"></script>
-<p id="1">A</p>
+	<script src="https://js.zohostatic.com/support/developer_sdk/v1/js/ZohoDeskClientSDK.min.js"></script>
+	<div id="status-header">
+			<p id="ticketNumber" class="status-attr"></p>
+			<p id="ticketContact" class="status-attr"></p>
+			<p id="t_shift_cell"></p>
+	</div>
+	<div id="alert-container"></div>
+
+	<div class="container min-vh-95 d-flex flex-column">
 
 
 
-<div id="footer">
-<table>
-	<tbody>
-		<tr>
-			<td>Ticket Shift</td>
-			<td id="t_shift_cell"></td>
-		</tr>
-	</tbody>
-</table>	
-</div> 
-<script src="./js/zohoUtil.js"></script>
-<script src="./js/extension.js"></script>
 
+		<div class="row flex-grow-1">
+			<div class="col d-flex justify-content-center align-items-center">
+				<div class="content ">
+					<h4>Welcome!</h4>
+					
 
+					<div class="list-group">
+
+						<a href="#" id="crmInfoListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
+			
+						  <div class="d-flex gap-2 w-100 justify-content-between">
+							<div>
+							  <h6 class="mb-0">CRM Info</h6>
+							  <p id="crmInfoDescriptor" class="mb-0 opacity-75">Some placeholder content in a paragraph.</p>
+							</div>
+						  </div>
+						</a>
+
+						<a href="#" id="crmEfinListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
+		
+						  <div class="d-flex gap-2 w-100 justify-content-between">
+							<div>
+							  <h6 class="mb-0">Software & EFINs</h6>
+							  <p id="crmEfinDescriptor" class="mb-0 opacity-75">Some placeholder content in a paragraph that goes a little longer so it wraps to a new line.</p>
+							</div>
+						  </div>
+						</a>
+
+						<a href="#" id="helpDeskListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
+			
+						  <div class="d-flex gap-2 w-100 justify-content-between">
+							<div>
+							  <h6 class="mb-0">HelpDesk</h6>
+							  <p id="helpDeskDescriptor" class="mb-0 opacity-75">Some placeholder content in a paragraph.</p>
+							</div>
+						  </div>
+						</a>
+					  </div>
+				</div>
+			</div>
+		</div>
+
+		<footer class="bg-dark text-white text-center py-3 mt-auto">
+			<p>Sticky Footer &copy; 2023</p>
+		</footer>
+	</div>
+	<script src="./js/uitools.js"></script>
+	<script src="./js/zohoUtil.js"></script>
+	<script src="./js/extension.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+	<script src="./js/registers.js"></script>
 </body>
+
 </html>

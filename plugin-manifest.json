@@ -5,7 +5,7 @@
   "service": "DESK",
   "storage": false,
   "type": "personal",
-  "whiteListedDomains": [],
+  "whiteListedDomains": ["https://desk.zoho.com", "https://www.zohoapis.com"],
   "modules": {
     "widgets": [
       {
@@ -21,19 +21,29 @@
     "connect-src": []
   },
   "zohoAuthorisation": {
-    "connectionLinkName": "sba_functions_v2",
-    "type":"connectors",
-    "connectionName": "sba_functions_v2",
-    "serviceName": "zoho_crm",
-    "userAccess": false,
+    "connectionLinkName": "sba_functions_v3",
+    "type": "connectors",
+    "connectionName": "sba_functions_v3",
+    "serviceName": "zlabs_integration",
+    "userAccess": true,
     "isUserDefinedService": false,
     "sharedBy": "772080139",
     "scope": [
-      "ZohoCRM.modules.accounts.READ",
-      "ZohoCRM.modules.contacts.READ",
-      "ZohoCRM.modules.custom.READ",
-      "ZohoCRM.org.ALL",
-      "ZohoCRM.settings.READ"
+      "Desk.basic.ALL",
+      "Desk.basic.READ",
+      "Desk.contacts.ALL",
+      "Desk.contacts.READ",
+      "Desk.extensions.ALL",
+      "Desk.search.READ",
+      "Desk.settings.ALL",
+      "Desk.settings.READ",
+      "Desk.tickets.READ",
+      "ZohoCRM.coql.READ",
+      "ZohoCRM.modules.ALL",
+      "ZohoCRM.modules.READ",
+      "ZohoCRM.org.READ",
+      "ZohoCRM.settings.READ",
+      "zohosearch.searchapi.READ"
     ]
   },
   "connectors": [],

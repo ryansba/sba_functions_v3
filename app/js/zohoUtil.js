@@ -1,16 +1,23 @@
-console.log('WTF')
 let zohoDeskInstance; // Declare a global variable to store the ZohoDesk instance
-
+let zohoCRMContactId;
+let deskContactGlobal;
 // Function to register event listeners
 function registerEventListeners() {
     // On Ticket Shift (moving from one ticket to another in the left hand sidebar)
     zohoDeskInstance.on("ticket_Shift", function(data){
-      document.getElementById("t_shift_cell").innerText = data['ticket_shifted']
-      getCurrentTicketData()
+
+        document.getElementById("t_shift_cell").innerText = data['ticket_shifted']
+        setupInitalOptions();
+
     });
   
     // Add other event listeners here
   }
+
+function updateStatusBar(number, subject, contactName){
+    document.getElementById('ticketNumber').innerHTML = `<strong>#${number}</strong> - ${subject}`
+    document.getElementById('ticketContact').innerText = contactName
+}
 
 // pull zoho desk user data from logged on user
 function getLoggedInUserData(){
@@ -33,10 +40,11 @@ function getLoggedInUserData(){
         .catch(error => {
             // Error Handling
             console.error('Error fetching user properties:', error);
+            displayErrorAlert('Function Failure..', error.message);
         });
 }
 
-// get list of departments and agents (prep to pass tickets from dept to dept)
+// get list of departments and agents (pass tickets from dept to dept)
 function getDepartments() {
     ZOHODESK.get('department.list')
         .then(function (response) {
@@ -50,16 +58,17 @@ function getDepartments() {
                 console.log(`Department ID: ${department.id}, Name: ${department.name}`);
             });
         })
-        .catch(function (err) {
+        .catch(function (error) {
             // Error Handling
-            console.error('Error fetching department list:', err);
+            console.error('Error fetching department list:', error);
+            displayErrorAlert('Function Failure..', error.message);
         });
 }
 
-// pull info from current ticket object
+// pull info from current ticket
 function getCurrentTicketData(){
     // define the properties to pull
-    const properties = ['number','departmentId', 'id', 'accountName', 'contactName', 'contactId'];
+    const properties = ['number','subject','departmentId', 'id', 'accountName', 'contactName', 'contactId'];
 
     // Create an array of promises for each property
     const promises = properties.map(property => ZOHODESK.get(`ticket.${property}`));
@@ -68,107 +77,195 @@ function getCurrentTicketData(){
         Promise.all(promises)
         .then(responses => {
             // The `responses` array contains the values of the requested properties in the same order as the `properties` array
-            const [number, departmentId, id, accountName, contactName, contactId] = responses;
+            const [number, subject, id, contactName] = responses;
             console.log('Ticket #:', number);
-            console.log('Dept ID:', departmentId);
-            console.log('Ticket ID:', id);
-            console.log('accountName', accountName);
-            console.log('contactName', contactName);
-            console.log('contactId', contactId);
+            console.log('Subject:', subject	)
+
             // Add your logic here for handling the retrieved data
+            updateStatusBar(number["ticket.number"], subject["ticket.subject"], contactName["ticket.contactName"]);
         })
         .catch(error => {
             // Error Handling
             console.error('Error fetching ticket properties:', error);
+
+            displayErrorAlert('Function Failure. .' + error.message);
+            
         });
 }    
 
-// pull info from current ticket object -> CANT GET CONTACT FROM TICKET DETAIL PAGE
-function getTicketContactData(){
-    // define the properties to pull
-    const properties = ['number','firstName', 'id', 'accountName', 'createdTime', 'contact.cf'];
+function fetchDeskContact(id) {
 
-    // Create an array of promises for each property
-    const promises = properties.map(property => ZOHODESK.get(`contact.${property}`));
-
-        // Wait for all promises to resolve
-        Promise.all(promises)
-        .then(responses => {
-            // The `responses` array contains the values of the requested properties in the same order as the `properties` array
-            const [firstName] = responses;
-            // console.log('isEndUser:', isEndUser);
-            console.log('firstName:', firstName);
-            // console.log('Contact ID:', id);
-            // console.log('accountName', accountName);
-            // console.log('createdTime', createdTime);
-            // console.log('contact.cf', contactCF);
-            // Add your logic here for handling the retrieved data
-        })
-        .catch(error => {
-            // Error Handling
-            console.error('Error fetching user properties:', error);
-        });
-}    
-
-function apiTest(){
-    let sampleRequestObj = {
-        url :"https://test.requestcatcher.com",
-        type :"GET",
-        data : {
-            "param1" :"Param 1 Value",
-            "param2" :"Param 2 Value"
-        },
-        postBody : {
-            "payloadData1" :"Payload value 1",
-            "payloadData2" :"Payload value 2"
-        },
-        headers : {
-            "Content-Type" :"application/json" 
-        },
-        connectionLinkName :"sba_functions_v3",
-        responeType :"arraybuffer",
-        fileObj : [{
-            key :"",
-            file :""
-        }]
-    }
+    let endpoint = `https://desk.zoho.com/api/v1/contacts/${id}`;
+    let connection = 'sba_functions_v3';
+    let action = 'GET';
     
-    ZOHODESK.request(sampleRequestObj).then(res=>{
-        // Implement your logic here
-        }, (error)=>{
-        // Implement your logic here		
-    })
+    var parameters = {
+        url: endpoint,
+        headers: { 'Content-Type': 'application/json'},
+        type: action,
+        postBody: {},
+        data: {},
+        connectionLinkName: connection,
+        responseType :"json",
+    };
+
+    return ZOHODESK.request( parameters )
 }
 
-// // pull info from current ticket object
-// function getTicketAccountData(){
-//     // define the properties to pull
-//     const properties = ['number','firstName', 'id', 'accountName', 'createdTime', 'account.cf'];
+function getDeskContact(deskContactId) {
+    return fetchDeskContact(deskContactId)
+        .then(response => {
+            return response
+        })
+        .catch(error => {
+            console.error('Error fetching desk contact:', error);
+        });
+}
 
-//     // Create an array of promises for each property
-//     const promises = properties.map(property => ZOHODESK.get(`account.${property}`));
+function searchForCRMContact(lastName, firstName){
+    const firstLetter = firstName[0];
+    let endpoint = `https://www.zohoapis.com/crm/v3/Contacts/search?criteria=((Last_Name:equals:${lastName})and(First_Name:starts_with:${firstLetter}))`;
+    console.log(endpoint)
+    let connection = 'sba_functions_v3';
+    let action = 'GET';
 
-//         // Wait for all promises to resolve
-//         Promise.all(promises)
-//         .then(responses => {
-//             // The `responses` array contains the values of the requested properties in the same order as the `properties` array
-//             const [isEndUser, firstName, id, accountName, createdTime, accountCF] = responses;
-//             console.log('isEndUser:', isEndUser);
-//             console.log('firstName:', firstName);
-//             console.log('Contact ID:', id);
-//             console.log('accountName', accountName);
-//             console.log('createdTime', createdTime);
-//             console.log('account.cf', accountCF);
-//             // Add your logic here for handling the retrieved data
-//         })
-//         .catch(error => {
-//             // Error Handling
-//             console.error('Error fetching user properties:', error);
-//         });
-// }    
+    var parameters = {
+        url: endpoint,
+        headers: { 'Content-Type': 'application/json'},
+        type: action,
+        postBody: {},
+        data: {},
+        connectionLinkName: connection,
+        responseType :"json",
+    };
 
+    return ZOHODESK.request( parameters )
+}
 
+function getCRMInfo(module, recordId) {
+    
+    let endpoint = `https://www.zohoapis.com/crm/v3/${module}/${recordId}`;
+    let connection = 'sba_functions_v3';
+    let action = 'GET';
+    
+    var parameters = {
+        url: endpoint,
+        headers: { 'Content-Type': 'application/json'},
+        type: action,
+        postBody: {},
+        data: {},
+        connectionLinkName: connection,
+        responseType :"json",
+    };
 
+    return ZOHODESK.request( parameters )
+}
+
+function getCRMContact() {
+    return getCRMInfo('Contacts', zohoCRMContactId)
+        .then(crmContact => {
+            console.log(crmContact)
+            let accountId = crmContact.data.statusMessage.data['0'].Account_Name.id
+            
+            console.log(accountId)
+            return crmContact
+        })
+        .catch(error => {
+
+            console.error('Error desk fetching contact:', error);
+            displayErrorAlert('Function Failure.. ' + error.message);
+            
+        });
+}
+
+function getDeskContactIdFromTicket() {
+    return ZOHODESK.get('ticket.contactId').then(response => {
+      return response['ticket.contactId'];
+    });
+  }
+
+  function disableUILink(elementId, descriptorId, messageText) {
+    const element = document.getElementById(elementId);
+
+    if (element.tagName === 'A') {
+      element.removeAttribute('href');
+    }
+  
+    element.setAttribute('disabled', true);
+    element.classList.add('disabled');
+    document.getElementById(descriptorId).innerText = messageText
+
+  }
+
+  function setupInitalOptions() {
+    // Get the zoho desk contact's ID from the ticket 
+    getDeskContactIdFromTicket().then(deskContactId => {
+      // Look up that user in zoho desk
+      getDeskContact(deskContactId).then(deskContact => {
+        deskContactGlobal = deskContact
+       // Make sure conneciton is authorized
+        if (deskContact.data.error_code == "1000"){
+            console.log('Authorize Connection:', deskContact.data.resumeUrl)
+            displayErrorAlert('Authorize Connection.. ' + deskContact.data.resumeUrl);
+        }
+        // Get the user's zohoCRMContactId 
+        else if (deskContact.data.statusMessage.zohoCRMContact) {
+          // Set the Global variable for zohoCRMContactId
+            zohoCRMContactId = deskContact.data.statusMessage.zohoCRMContact.id;
+        } 
+        // If user isnt synced try to get zoho contact id custom field
+        else if (deskContact.data.statusMessage.cf.cf_zoho_contact_id){
+            zohoCRMContactId = deskContact.data.statusMessage.cf_zoho_contact_id.id;
+        }
+        // If zoho contact id field null search zoho 
+        else {
+
+            firstName = deskContact.data.statusMessage.firstName;
+            lastName = deskContact.data.statusMessage.lastName;
+            
+            searchForCRMContact(firstName, lastName).then(searchResultsList => {
+                if (searchResultsList.data.statusMessage.data){
+
+                    const results = searchResultsList.data.statusMessage.data
+                    const resultsList = document.getElementById('results-list');
+
+                    results.forEach(result => {
+                      const listItem = document.createElement('a');
+                      listItem.classList.add('list-group-item', 'list-group-item-action');
+                      listItem.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between">
+                          <h5 class="mb-1">${result.Full_Name}</h5>
+                          <small>${result.Type}</small>
+                        </div>
+                        <p class="mb-1">${result.Account_Name.name}</p>
+                        <small>Status: ${result.Status}</small>
+                        <small>ID: ${result.id}</small>
+                      `;
+                
+                      resultsList.appendChild(listItem);
+                    });
+                }
+                else {
+                    zohoCRMContactId = deskContact.data.statusMessage.zohoCRMContact.id
+                }
+            }).catch(error => {
+
+                // Render error in popup if there's an issue with fetching deskContact
+                displayErrorAlert('Function Failure.. ' + error.message);
+                disableUILink('crmInfoListItem', 'crmInfoDescriptor', 'not synced with zoho');
+                disableUILink('crmEfinListItem', 'crmEfinDescriptor', 'not synced with zoho');
+              });
+        }
+        
+      }).catch(error => {
+
+        // Render error in popup if there's an issue with fetching deskContact
+        displayErrorAlert('Function Failure.. ' + error.message);
+        disableUILink('crmInfoListItem', 'crmInfoDescriptor', 'not synced with zoho');
+        disableUILink('crmEfinListItem', 'crmEfinDescriptor', 'not synced with zoho');
+      });
+    });
+  }
 
 window.onload = function () {
 ZOHODESK.extension.onload().then(function (App) {
@@ -176,82 +273,9 @@ ZOHODESK.extension.onload().then(function (App) {
 
     registerEventListeners(); // Call the function to register event listeners
     getLoggedInUserData();
-    getTicketContactData();
+    setupInitalOptions();
+
+    // getTicketContactData();
     // Other code
 });
 };
-
-
-
-
-
-	
-// window.onload = function () {
-//  ZOHODESK.extension.onload().then(function (App) {
-    
-//     // Event Listeners for Zoho Desk
-
-//     // On Ticket Shift (moving from one ticket to another in the left hand sidebar)
-//     App.instance.on("ticket_Shift", function(data){
-//         document.getElementById("1").innerText = data['ticket_shifted']
-//     });
-
-
-//     //Get ticket related data
-//     ZOHODESK.get('ticket.email').then(function (res) {
-//             //response Handling
-//         }).catch(function (err) {
-//             //error Handling
-//         });
-
-//     ZOHODESK.get('user.fullName').then(function(response) {
-//         document.getElementById("1").innerText = response['user.fullName']
-//         }).catch(function(err){
-//         //Error Handling
-//         })
-
-
-//     /*	
-//                 //To Set data in Desk UI Client
-//                 ZOHODESK.set('ticket.comment', { 'content': "Test comment" }).then(function (res) {
-//                     //response Handling
-//                 }).catch(function (err) {
-//                     //error Handling
-//                 });
-    
-//                 //Access Data Storage for an extension
-//                 //Get the saved data of an extension from data storage
-//                 ZOHODESK.get('database', { 'key': 'key1', 'queriableValue': 'value1' }).then(function (response) {
-//                     //response Handling
-//                 }).catch(function (err) {
-//                     //error Handling
-//                 })            
-                
-//                 //Save data in to data staorage
-//                 ZOHODESK.set('database', { 'key': 'key_1', 'value': { 'id': 123 }, 'queriableValue': 'value1' }).then(function (response) {
-//                     //response Handling
-//                 }).catch(function (err) {
-//                     //error Handling
-//                 })
-    
-//                 //Change tabs in ticket detailview
-//                 ZOHODESK.invoke('ROUTE_TO', 'ticket.attachments');
-    
-//                 //To Insert the content in the current opened reply editor from extension
-//                 ZOHODESK.invoke('Insert', 'ticket.replyEditor', { content: "<p>your content</p>" });
-    
-//                 //To listen to an event in desk
-//                 App.instance.on('comment_Added', function(data){
-//                     //data handling 
-//                 });
-    
-//                 //To access locale
-//                 App.locale;
-    
-//                 //To access localresources
-//                 App.localeResource            
-                    
-//                 //To Know more on these, please read the documentation
-//             */
-// });
-// };
