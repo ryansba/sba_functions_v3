@@ -13,28 +13,6 @@ function registerEventListeners() {
     // Add other event listeners here
 }
 
-function updateStatusBar(number, subject, contactName) {
-    document.getElementById('ticketNumber').innerHTML = `<strong>#${number}</strong> - ${subject}`
-    document.getElementById('ticketContact').innerText = contactName
-}
-
-function addAndSetActiveBreadcrumb(text) {
-
-    const breadcrumbList = document.querySelector('.breadcrumb');
-    
-    const defBreadcrumb = document.createElement('li');
-    defBreadcrumb.classList.add('breadcrumb-item');
-    defBreadcrumb.innerHTML = `<a href="#" onclick="setupInitalOptions()">Home</a>`
-
-    const newBreadcrumb = document.createElement('li');
-    newBreadcrumb.classList.add('breadcrumb-item', 'active');
-    newBreadcrumb.setAttribute('aria-current', 'page');
-    newBreadcrumb.textContent = text;
-
-    breadcrumbList.appendChild(defBreadcrumb)
-    breadcrumbList.appendChild(newBreadcrumb);
-  }
-
 // pull zoho desk user data from logged on user
 function getLoggedInUserData() {
     // define the properties to pull
@@ -137,6 +115,7 @@ function getDeskContact(deskContactId) {
             console.error('Error fetching desk contact:', error);
         });
 }
+
 function searchForCRMEfin(accountId, efinType) {
     let endpoint = `https://www.zohoapis.com/crm/v3/EFINs/search?criteria=((Account_Name:equals:${accountId})and(EFIN_Type:equals:${efinType}))`;
     console.log(endpoint)
@@ -155,7 +134,6 @@ function searchForCRMEfin(accountId, efinType) {
 
     return ZOHODESK.request(parameters)
 }
-
 
 function searchForCRMContact(lastName, firstName) {
     const firstLetter = firstName[0];
@@ -190,7 +168,7 @@ function getCRMRelatedList(module, recordId, relation) {
         headers: { 'Content-Type': 'application/json' },
         type: action,
         postBody: {},
-        data: {'fields':'EFIN'},
+        data: { 'fields': 'EFIN' },
         connectionLinkName: connection,
         responseType: "json",
     };
@@ -218,40 +196,105 @@ function getCRMInfo(module, recordId) {
     return ZOHODESK.request(parameters)
 }
 
+function renderEfinHTML(name, accountId, accountName, company, efinType, type, email, master, software, svbUser, svbLogin, softwareLogin, softwareUser, taxYear) {
+    let efinData = [
+      { label: "EFIN", value: name },
+      { label: "Account ID", value: accountId },
+      { label: "Account Name", value: accountName },
+      { label: "Company", value: company },
+      { label: "EFIN Type", value: efinType },
+      { label: "Type", value: type },
+      { label: "Email", value: email },
+      { label: "Master", value: master },
+      { label: "SW", value: software },
+      { label: "SVB User", value: svbUser },
+      { label: "SVB Login", value: svbLogin },
+      { label: "SW Login", value: softwareLogin },
+      { label: "SW User", value: softwareUser },
+      { label: "Tax Year", value: taxYear }
+    ];
+
+    let html = `<div class="table-responsive table-detail overflow-hidden">
+    <table class="table">
+        <tbody>
+        `;
+
+        efinData.forEach(data => {
+            html += `
+              <tr>
+                <td class="table-label">${data.label}</td>
+                <td class="table-value">${typeof data.value === 'string' && data.value.startsWith('https') ? 
+                  `<span>
+                    <a href="${data.value}" target="_blank" title="Open URL"><i class="fa fa-external-link"></i></a>
+                    <button onclick="copyToClipboard('${data.value}', this)" title="Copy URL to clipboard"><i class="fa fa-copy"></i></button>
+                    <span class="tooltiptext">Link copied to clipboard</span>
+                  </span>` : data.value}
+                </td>
+              </tr>
+            `;
+          });
+
+        html += `</tbody></table></div>`
+        addAndSetActiveBreadcrumb(`${name}`, true)
+        document.getElementById('content-container').innerHTML = html;
+}
+
 function getMasterEfins() {
     return getCRMInfo('Contacts', zohoCRMContactId)
         .then(crmContact => {
             let accountId = crmContact.data.statusMessage.data['0'].Account_Name.id;
 
             searchForCRMEfin(accountId, 'Master').then(masters => {
-                console.log(masters);
 
-                let html = `<div class="table-responsive table-detail overflow-hidden">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>EFIN</th>
-                                            <th>SW</th>
-                                            <th>Master</th>
-                                            <th>Type</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
+                // Get count of Master EFINS 
+                console.log('# Masters', masters.data.statusMessage.data.length);
+                numberOfMasters = masters.data.statusMessage.data.length
 
-                masters.data.statusMessage.data.forEach(master => {
-                    html += `
+                // If only one Master just grab all the info and display it 
+                if (numberOfMasters == 1) {
+                    let master = masters.data.statusMessage.data[0]
+                    renderEfinHTML(master.Name, master.Account_Name.id, master.Account_Name.name, master.Company_Name, master.EFIN_Type, master.Type, master.Email,master.Master_EFIN_lu.name, master.SVB_Software, master.SVB_User_ID, master.SVB_Login_URL, master.Software_Login_URL, master.Software_User_ID, master.Tax_Year)
+                }
+
+                // If > 1 master display the table 
+                else {
+                    let html = `<div class="table-responsive table-detail overflow-hidden">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>EFIN</th>
+                                <th>SW</th>
+                                <th>Master</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                    masters.data.statusMessage.data.forEach(master => {
+                        console.log('master###', master)
+
+                        html += `
                         <tr>
-                            <td>${master.Name}</td>
+
+                        <td><button onclick="renderEfinHTML('${master.Name}', ${master.Account_Name.id}, '${master.Account_Name.name}', '${master.Company_Name}', '${master.EFIN_Type}', '${master.Type}', '${master.Email}', '${master.Master_EFIN_lu.name}', '${master.SVB_Software}', '${master.SVB_User_ID}', '${master.SVB_Login_URL}', '${master.Software_Login_URL}', '${master.Software_User_ID}', '${master.Tax_Year}')" title="Get info" style="border: none; background: none; padding: 0; cursor: pointer;">${master.Name}</button></td>
+
                             <td>${master.SVB_Software}</td>
                             <td>${master.Master_EFIN_lu.name}</td>
                             <td>${master.Type}</td>
                         </tr>
-                    `;
-                });
+                        `;
+                    });
 
-                html += `</tbody></table></div>`;
-                addAndSetActiveBreadcrumb('CRM Info');
-                document.getElementById('content-container').innerHTML = html;
+                    html += `</tbody></table></div>`;
+                    clearBreadcrumbsPastHome();
+                    addAndSetActiveBreadcrumb('Masters');
+                    document.getElementById('content-container').innerHTML = html;
+
+                }
+
+
+
+
             });
 
         }).catch(error => {
@@ -259,7 +302,6 @@ function getMasterEfins() {
             displayErrorAlert('Function Failure.. ' + error.message);
         });
 }
-
 
 function getCRMContact() {
     return getCRMInfo('Contacts', zohoCRMContactId)
@@ -275,13 +317,13 @@ function getCRMContact() {
                 { label: "Sales Person", value: crmContact.data.statusMessage.data['0'].Sales_Person },
                 { label: "Account Status", value: crmContact.data.statusMessage.data['0'].Status },
                 { label: "Account Type", value: crmContact.data.statusMessage.data['0'].Type }
-              ];
+            ];
 
             let html = `<div class="table-responsive table-detail overflow-hidden">
                             <table class="table">
                                 <tbody>`;
             contactData.forEach(data => {
-            html += `
+                html += `
                 <tr>
 	                <td class="table-label">${data.label}</td>
 	                <td class="table-value">${data.value}</td>
@@ -290,7 +332,8 @@ function getCRMContact() {
             });
 
             html += `</tbody></table></div>`
-            addAndSetActiveBreadcrumb('CRM Info')
+            clearBreadcrumbsPastHome();
+            addAndSetActiveBreadcrumb('CRM Info');
             document.getElementById('content-container').innerHTML = html;
         })
         .catch(error => {
@@ -306,93 +349,6 @@ function getDeskContactIdFromTicket() {
         return response['ticket.contactId'];
     });
 }
-
-function disableUILink(elementId, descriptorId, messageText) {
-    const element = document.getElementById(elementId);
-
-    if (element.tagName === 'A') {
-        element.removeAttribute('href');
-    }
-
-    element.setAttribute('disabled', true);
-    element.classList.add('disabled');
-    document.getElementById(descriptorId).innerText = messageText
-
-}
-
-function enableUILink(elementId, descriptorId, messageText) {
-    const element = document.getElementById(elementId);
-  
-    if (element.tagName === 'A') {
-      element.setAttribute('href', '#');
-    }
-  
-    element.removeAttribute('disabled');
-    element.classList.remove('disabled');
-    document.getElementById(descriptorId).innerText = messageText
-  }
-
-function resetUI(){
-
-    document.getElementById('breadcrumb-nav-list').innerHTML = ''
-
-    let html =`
-    <div id="list-group-options-container" class="list-group-options">
-        <a href="#" id="crmInfoListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3 disabled" aria-current="true" disabled>
-          <div class="d-flex gap-2 w-100 justify-content-between">
-            <div>
-              <h6 class="mb-0">CRM Info</h6>
-              <p id="crmInfoDescriptor" class="mb-0 opacity-75">Checking for contact id...</p>
-            </div>
-          </div>
-        </a>
-
-        <a href="#" id="crmEfinListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3 disabled" aria-current="true" disabled>
-          <div class="d-flex gap-2 w-100 justify-content-between">
-            <div>
-              <h6 class="mb-0">Software & EFINs</h6>
-              <p id="crmEfinDescriptor" class="mb-0 opacity-75">Checking for contact id...</p>
-            </div>
-          </div>
-        </a>
-
-        <a href="#" id="helpDeskListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
-          <div class="d-flex gap-2 w-100 justify-content-between">
-            <div>
-              <h6 class="mb-0">HelpDesk</h6>
-              <p id="helpDeskDescriptor" class="mb-0 opacity-75">Helpdesk functions available</p>
-            </div>
-          </div>
-        </a>
-      </div>`
-      document.getElementById('content-container').innerHTML = html;
-
-    // specify elements to listen to for clicks
-    const crmInfoLink = document.getElementById("crmInfoListItem");
-    const efinInfoLink = document.getElementById("crmEfinListItem");
-    const helpDeskLink = document.getElementById("helpDeskListItem")
-
-    // CRM Info Listener
-    crmInfoLink.addEventListener("click", function(event) {
-      event.preventDefault(); // Prevent the default navigation behavior
-      console.log("CRM Info Link clicked!");
-      getCRMContact();
-    });
-
-    // EFIN Info Listener
-    efinInfoLink.addEventListener("click", function(event) {
-      event.preventDefault(); // Prevent the default navigation behavior
-      console.log("EFIN Info Link clicked!");
-      getMasterEfins();
-    });
-
-    // HelpDesk Info Listener
-    helpDeskLink.addEventListener("click", function(event) {
-        event.preventDefault(); // Prevent the default navigation behavior
-        console.log("helpDeskLink clicked!");
-        });
-    
-}  
 
 function setupInitalOptions() {
 
@@ -422,8 +378,8 @@ function setupInitalOptions() {
                 zohoCRMContactId = deskContact.data.statusMessage.zohoCRMContact.id
             }
             enableUILink('crmInfoListItem', 'crmInfoDescriptor', 'Ready to fetch..');
-            enableUILink('crmEfinListItem', 'crmEfinDescriptor', 'Ready to fetch..'); 
-            
+            enableUILink('crmEfinListItem', 'crmEfinDescriptor', 'Ready to fetch..');
+
         }).catch(error => {
             // Render error in popup if there's an issue with fetching deskContact
             displayErrorAlert('Function Failure.. ' + error.message);
