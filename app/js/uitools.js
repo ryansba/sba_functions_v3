@@ -17,3 +17,8 @@ function displayErrorAlert(errorMessage) {
     alertElement.appendChild(closeButton);
     alertContainer.appendChild(alertElement);
   }
+
+function renderHTML(where, what) {
+  element = document.getElementById(where)
+  
+}

@@ -33,74 +33,40 @@
 			width:100%;
 		}
 		.content {
-			padding: 1rem;
+			padding: .5rem;
 			background-color: #ffffff;
 			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 			border-radius: 0.25rem;
 		}
 
-		.list-group {
-  width: 100%;
 
+    .table-label {
+      max-width: 50px;
+      text-align: left;
+      margin-right: 0.5rem;
+	  overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .table-value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100px;
+    }
+    
+	.table-detail {
+		font-size:.8rem!important;
+	}
 
-}
-
-.form-check-input:checked + .form-checked-content {
-  opacity: .5;
-}
-
-.form-check-input-placeholder {
-  border-style: dashed;
-}
-[contenteditable]:focus {
-  outline: 0;
-}
-
-.list-group-checkable .list-group-item {
-  cursor: pointer;
-}
-.list-group-item-check {
-  position: absolute;
-  clip: rect(0, 0, 0, 0);
-}
-.list-group-item-check:hover + .list-group-item {
-  background-color: var(--bs-secondary-bg);
-}
-.list-group-item-check:checked + .list-group-item {
-  color: #fff;
-  background-color: var(--bs-primary);
-  border-color: var(--bs-primary);
-}
-.list-group-item-check[disabled] + .list-group-item,
-.list-group-item-check:disabled + .list-group-item {
-  pointer-events: none;
-  filter: none;
-  opacity: .5;
+.list-group-options {
+  	width: 100%;
 }
 
-.list-group-radio .list-group-item {
-  cursor: pointer;
-  border-radius: .5rem;
-}
-.list-group-radio .form-check-input {
-  z-index: 2;
-  margin-top: -.5em;
-}
-.list-group-radio .list-group-item:hover,
-.list-group-radio .list-group-item:focus {
-  background-color: var(--bs-secondary-bg);
-}
+table {
+  max-width: none;
+  width:auto;
 
-.list-group-radio .form-check-input:checked + .list-group-item {
-  background-color: var(--bs-body);
-  border-color: var(--bs-primary);
-  box-shadow: 0 0 0 2px var(--bs-primary);
-}
-.list-group-radio .form-check-input[disabled] + .list-group-item,
-.list-group-radio .form-check-input:disabled + .list-group-item {
-  pointer-events: none;
-  filter: none;
-  opacity: .5;
 }
 
 	</style>
@@ -108,56 +74,31 @@
 
 <body>
 	<script src="https://js.zohostatic.com/support/developer_sdk/v1/js/ZohoDeskClientSDK.min.js"></script>
-	<div id="status-header">
-			<p id="ticketNumber" class="status-attr"></p>
-			<p id="ticketContact" class="status-attr"></p>
-			<p id="t_shift_cell"></p>
-	</div>
+
 	<div id="alert-container"></div>
+
+
 
 	<div class="container min-vh-95 d-flex flex-column">
 
-
-
-
 		<div class="row flex-grow-1">
-			<div class="col d-flex justify-content-center align-items-center">
-				<div class="content ">
-					<h4>Welcome!</h4>
-					
+	
+				<div class="content">
+					<div id="status-header">
+						<p id="ticketNumber" class="status-attr"></p>
+						<p id="ticketContact" class="status-attr"></p>
+				</div>
+				<nav aria-label="breadcrumb">
+					<ol id="breadcrumb-nav-list" class="breadcrumb">
+					  
 
-					<div class="list-group">
+					</ol>
+				  </nav>
 
-						<a href="#" id="crmInfoListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
-			
-						  <div class="d-flex gap-2 w-100 justify-content-between">
-							<div>
-							  <h6 class="mb-0">CRM Info</h6>
-							  <p id="crmInfoDescriptor" class="mb-0 opacity-75">Some placeholder content in a paragraph.</p>
-							</div>
-						  </div>
-						</a>
+		<div id="content-container">
 
-						<a href="#" id="crmEfinListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
-		
-						  <div class="d-flex gap-2 w-100 justify-content-between">
-							<div>
-							  <h6 class="mb-0">Software & EFINs</h6>
-							  <p id="crmEfinDescriptor" class="mb-0 opacity-75">Some placeholder content in a paragraph that goes a little longer so it wraps to a new line.</p>
-							</div>
-						  </div>
-						</a>
-
-						<a href="#" id="helpDeskListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
-			
-						  <div class="d-flex gap-2 w-100 justify-content-between">
-							<div>
-							  <h6 class="mb-0">HelpDesk</h6>
-							  <p id="helpDeskDescriptor" class="mb-0 opacity-75">Some placeholder content in a paragraph.</p>
-							</div>
-						  </div>
-						</a>
-					  </div>
+</div>
+</div>
 				</div>
 			</div>
 		</div>

@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", function() {
     efinInfoLink.addEventListener("click", function(event) {
       event.preventDefault(); // Prevent the default navigation behavior
       console.log("EFIN Info Link clicked!");
+      getMasterEfins();
     });
 
     // HelpDesk Info Listener
