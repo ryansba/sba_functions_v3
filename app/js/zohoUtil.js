@@ -87,11 +87,26 @@ function getCurrentTicketData() {
         });
 }
 
+function searchForHelpCenterUser(searchBy, searchValue) {
+    // let endpoint = `https://desk.zoho.com/api/v1/users?searchBy=(First_Name:starts_with:Craig)&limit=50&sortBy=email`
+    let endpoint = `https://desk.zoho.com/api/v1/users?searchBy=(${searchBy}:equals:${searchValue})`
+    let connection = 'sba_functions_v3';
+    let action = 'GET';
 
-/api/v1/users/{user_id}/groups
+    var parameters = {
+        url: endpoint,
+        headers: { 'Content-Type': 'application/json' },
+        type: action,
+        postBody: {},
+        data: {},
+        connectionLinkName: connection,
+        responseType: "json",
+    };
+
+    return ZOHODESK.request(parameters)
+}
 
 function fetchDeskData(module, id) {
-
     let endpoint = `https://desk.zoho.com/api/v1/${module}/${id}`;
     let connection = 'sba_functions_v3';
     let action = 'GET';
@@ -109,8 +124,42 @@ function fetchDeskData(module, id) {
     return ZOHODESK.request(parameters)
 }
 
-function getHelpCenterUserGroups(userId){
-    
+function getHelpCenterUsersJoinedGroups(userId){
+    let endpoint = `https://desk.zoho.com/api/v1/users/${userId}/groups`
+    let connection = 'sba_functions_v3';
+    let action = 'GET';
+
+    var parameters = {
+        url: endpoint,
+        headers: { 'Content-Type': 'application/json' },
+        type: action,
+        postBody: {},
+        data: {},
+        connectionLinkName: connection,
+        responseType: "json",
+    };
+
+    return ZOHODESK.request(parameters)
+
+}
+
+function getHelpCenterUser(userId){
+    let endpoint = `https://desk.zoho.com/api/v1/users/${userId}`
+    let connection = 'sba_functions_v3';
+    let action = 'GET';
+
+    var parameters = {
+        url: endpoint,
+        headers: { 'Content-Type': 'application/json' },
+        type: action,
+        postBody: {},
+        data: {},
+        connectionLinkName: connection,
+        responseType: "json",
+    };
+
+    return ZOHODESK.request(parameters)
+
 }
 
 function getDeskContact(deskContactId) {
@@ -196,13 +245,17 @@ function getMasterEfins() {
             let accountId = crmContact.data.statusMessage.data['0'].Account_Name.id;
 
             searchForCRMEfin(accountId, 'Master').then(masters => {
-
+                console.log(masters)
                 // Get count of Master EFINS 
-                console.log('# Masters', masters.data.statusMessage.data.length);
-                numberOfMasters = masters.data.statusMessage.data.length
+                // console.log('# Masters', masters.data.statusMessage.data.length);
+                // numberOfMasters = masters.data.statusMessage.data.length
 
+                if (masters.data.statusMessage == "") {
+                    disableUILink('crmEfinListItem', 'crmEfinDescriptor', 'No master found...')
+
+                }
                 // If only one Master just grab all the info and display it 
-                if (numberOfMasters == 1) {
+                else if (masters.data.statusMessage.data.length == 1) {
                     let master = masters.data.statusMessage.data[0]
                     renderEfinHTML(master.Name, master.Account_Name.id, master.Account_Name.name, master.Company_Name, master.EFIN_Type, master.Type, master.Email,master.Master_EFIN_lu.name, master.SVB_Software, master.SVB_User_ID, master.SVB_Login_URL, master.Software_Login_URL, master.Software_User_ID, master.Tax_Year)
                 }
@@ -314,8 +367,6 @@ function searchForCRMContact(lastName, firstName) {
     return ZOHODESK.request(parameters)
 }
 
-
-
 function renderEfinHTML(name, accountId, accountName, company, efinType, type, email, master, software, svbUser, svbLogin, softwareLogin, softwareUser, taxYear) {
     let efinData = [
       { label: "EFIN", value: name },
@@ -359,51 +410,90 @@ function renderEfinHTML(name, accountId, accountName, company, efinType, type, e
         document.getElementById('content-container').innerHTML = html;
 }
 
-
-
-
-
-
-
 function setupInitalOptions() {
 
     resetUI();
     getCurrentTicketData();
+
     // Get the zoho desk contact's ID from the ticket 
     getDeskContactIdFromTicket().then(deskContactId => {
+
         // Look up that user in zoho desk
         getDeskContact(deskContactId).then(deskContact => {
-
-            
-
-            deskContactGlobal = deskContact
 
             // Make sure conneciton is authorized
             if (deskContact.data.error_code == "1000") {
                 console.log('Authorize Connection:', deskContact.data.resumeUrl)
                 displayErrorAlert('Authorize Connection.. ' + deskContact.data.resumeUrl);
             }
+
             // Get the user's zohoCRMContactId 
             else if (deskContact.data.statusMessage.zohoCRMContact) {
+
                 // Set the Global variable for zohoCRMContactId
                 zohoCRMContactId = deskContact.data.statusMessage.zohoCRMContact.id;
             }
-            // If user isnt synced try to get zoho contact id custom field
+
+            // If user isnt synced try to get zoho contact id from custom field in desk
             else if (deskContact.data.statusMessage.cf.cf_zoho_contact_id) {
+
+                // Set the Global variable for zohoCRMContactId
                 zohoCRMContactId = deskContact.data.statusMessage.cf_zoho_contact_id.id;
             }
+
+            //
+            // To do here - incorporate search feature into UI 
+            //
             // If zoho contact id field is null error out and display message 
             else {
+
+                // Set the Global variable for zohoCRMContactId
                 zohoCRMContactId = deskContact.data.statusMessage.zohoCRMContact.id
             }
+
             enableUILink('crmInfoListItem', 'crmInfoDescriptor', 'Ready to fetch..');
             enableUILink('crmEfinListItem', 'crmEfinDescriptor', 'Ready to fetch..');
 
-
+            // Check if the contact is an end user of the help center 
             if (deskContact.data.statusMessage.isEndUser != true){
-                displayErrorAlert('This contact is not a helpdesk end user and will not have access to the support portal. Do you want to invite them? Yes / Dismiss');
+
+                // To do here - incorporate quick quto search feature into UI to make sure there isnt really an account
+                // Add Invitation options to UI
+                // 
+                // If zoho contact id field is null error out and display message 
+                displayErrorAlert('This contact is not a helpdesk end user and will not have access to the support portal.');
+
             } else {
-                
+
+                // Search the for a help center user by the desk contacts email 
+                searchForHelpCenterUser('Email', deskContact.data.statusMessage.email).then(userSearchResults => {
+
+                    //
+                    // To do here - incorporate search feature into UI 
+                    //
+                    // Take the first result and get the help center user data 
+                    getHelpCenterUser(userSearchResults.data.statusMessage.data[0].id).then(userResult => {
+
+                    // Get the groups that the member is a user of 
+                    getHelpCenterUsersJoinedGroups(userResult.data.statusMessage.id).then(usersGroups => {
+
+                        joinedGroups = usersGroups.data.statusMessage.data
+
+                        // If the help center user is not a member of any groups 
+                        if(Array.isArray(joinedGroups) && joinedGroups.length === 0){
+
+                            //
+                            // Todo here - add invite option to UI
+                            //
+                            displayErrorAlert('Help center user is not a member of any groups...')
+                        }
+                        else{
+                            console.log('joinedGroups', joinedGroups)
+                        }
+                    })
+                    })
+                })
+
             }
 
         }).catch(error => {
