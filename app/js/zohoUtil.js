@@ -87,9 +87,12 @@ function getCurrentTicketData() {
         });
 }
 
-function fetchDeskContact(id) {
 
-    let endpoint = `https://desk.zoho.com/api/v1/contacts/${id}`;
+/api/v1/users/{user_id}/groups
+
+function fetchDeskData(module, id) {
+
+    let endpoint = `https://desk.zoho.com/api/v1/${module}/${id}`;
     let connection = 'sba_functions_v3';
     let action = 'GET';
 
@@ -106,8 +109,12 @@ function fetchDeskContact(id) {
     return ZOHODESK.request(parameters)
 }
 
+function getHelpCenterUserGroups(userId){
+    
+}
+
 function getDeskContact(deskContactId) {
-    return fetchDeskContact(deskContactId)
+    return fetchDeskData('contacts', deskContactId)
         .then(response => {
             return response
         })
@@ -116,64 +123,10 @@ function getDeskContact(deskContactId) {
         });
 }
 
-function searchForCRMEfin(accountId, efinType) {
-    let endpoint = `https://www.zohoapis.com/crm/v3/EFINs/search?criteria=((Account_Name:equals:${accountId})and(EFIN_Type:equals:${efinType}))`;
-    console.log(endpoint)
-    let connection = 'sba_functions_v3';
-    let action = 'GET';
-
-    var parameters = {
-        url: endpoint,
-        headers: { 'Content-Type': 'application/json' },
-        type: action,
-        postBody: {},
-        data: {},
-        connectionLinkName: connection,
-        responseType: "json",
-    };
-
-    return ZOHODESK.request(parameters)
-}
-
-function searchForCRMContact(lastName, firstName) {
-    const firstLetter = firstName[0];
-    let endpoint = `https://www.zohoapis.com/crm/v3/Contacts/search?criteria=((Last_Name:equals:${lastName})and(First_Name:starts_with:${firstLetter}))`;
-    console.log(endpoint)
-    let connection = 'sba_functions_v3';
-    let action = 'GET';
-
-    var parameters = {
-        url: endpoint,
-        headers: { 'Content-Type': 'application/json' },
-        type: action,
-        postBody: {},
-        data: {},
-        connectionLinkName: connection,
-        responseType: "json",
-    };
-
-    return ZOHODESK.request(parameters)
-}
-
-function getCRMRelatedList(module, recordId, relation) {
-
-
-    let endpoint = `https://www.zohoapis.com/crm/v3/${module}/${recordId}/${relation}`;
-    console.log('EP', endpoint)
-    let connection = 'sba_functions_v3';
-    let action = 'GET';
-    let fields = ['EFIN']
-    var parameters = {
-        url: endpoint,
-        headers: { 'Content-Type': 'application/json' },
-        type: action,
-        postBody: {},
-        data: { 'fields': 'EFIN' },
-        connectionLinkName: connection,
-        responseType: "json",
-    };
-    return ZOHODESK.request(parameters)
-
+function getDeskContactIdFromTicket() {
+    return ZOHODESK.get('ticket.contactId').then(response => {
+        return response['ticket.contactId'];
+    });
 }
 
 function getCRMInfo(module, recordId) {
@@ -196,47 +149,45 @@ function getCRMInfo(module, recordId) {
     return ZOHODESK.request(parameters)
 }
 
-function renderEfinHTML(name, accountId, accountName, company, efinType, type, email, master, software, svbUser, svbLogin, softwareLogin, softwareUser, taxYear) {
-    let efinData = [
-      { label: "EFIN", value: name },
-      { label: "Account ID", value: accountId },
-      { label: "Account Name", value: accountName },
-      { label: "Company", value: company },
-      { label: "EFIN Type", value: efinType },
-      { label: "Type", value: type },
-      { label: "Email", value: email },
-      { label: "Master", value: master },
-      { label: "SW", value: software },
-      { label: "SVB User", value: svbUser },
-      { label: "SVB Login", value: svbLogin },
-      { label: "SW Login", value: softwareLogin },
-      { label: "SW User", value: softwareUser },
-      { label: "Tax Year", value: taxYear }
-    ];
+function getCRMContact() {
+    return getCRMInfo('Contacts', zohoCRMContactId)
+        .then(crmContact => {
+            console.log(crmContact)
+            let contactData = [
+                { label: "Account ID", value: crmContact.data.statusMessage.data['0'].Account_Name.id },
+                { label: "Account Name", value: crmContact.data.statusMessage.data['0'].Account_Name.name },
+                { label: "Became Client", value: crmContact.data.statusMessage.data['0'].Became_Client },
+                { label: "Phone Number", value: crmContact.data.statusMessage.data['0'].Phone },
+                { label: "SBA Buildout", value: crmContact.data.statusMessage.data['0'].SBA_Buildout },
+                { label: "Workflow Run URL", value: crmContact.data.statusMessage.data['0'].WorkFlow_Run_URL },
+                { label: "Sales Person", value: crmContact.data.statusMessage.data['0'].Sales_Person },
+                { label: "Account Status", value: crmContact.data.statusMessage.data['0'].Status },
+                { label: "Account Type", value: crmContact.data.statusMessage.data['0'].Type }
+            ];
 
-    let html = `<div class="table-responsive table-detail overflow-hidden">
-    <table class="table">
-        <tbody>
-        `;
-
-        efinData.forEach(data => {
-            html += `
-              <tr>
-                <td class="table-label">${data.label}</td>
-                <td class="table-value">${typeof data.value === 'string' && data.value.startsWith('https') ? 
-                  `<span>
-                    <a href="${data.value}" target="_blank" title="Open URL"><i class="fa fa-external-link"></i></a>
-                    <button onclick="copyToClipboard('${data.value}', this)" title="Copy URL to clipboard"><i class="fa fa-copy"></i></button>
-                    <span class="tooltiptext">Link copied to clipboard</span>
-                  </span>` : data.value}
-                </td>
-              </tr>
+            let html = `<div class="table-responsive table-detail overflow-hidden">
+                            <table class="table">
+                                <tbody>`;
+            contactData.forEach(data => {
+                html += `
+                <tr>
+	                <td class="table-label">${data.label}</td>
+	                <td class="table-value">${data.value}</td>
+                </tr>
             `;
-          });
+            });
 
-        html += `</tbody></table></div>`
-        addAndSetActiveBreadcrumb(`${name}`, true)
-        document.getElementById('content-container').innerHTML = html;
+            html += `</tbody></table></div>`
+            clearBreadcrumbsPastHome();
+            addAndSetActiveBreadcrumb('CRM Info');
+            document.getElementById('content-container').innerHTML = html;
+        })
+        .catch(error => {
+
+            console.error('Error desk CRM contact:', error);
+            displayErrorAlert('Function Failure.. ' + error.message);
+
+        });
 }
 
 function getMasterEfins() {
@@ -303,52 +254,116 @@ function getMasterEfins() {
         });
 }
 
-function getCRMContact() {
-    return getCRMInfo('Contacts', zohoCRMContactId)
-        .then(crmContact => {
-            console.log(crmContact)
-            let contactData = [
-                { label: "Account ID", value: crmContact.data.statusMessage.data['0'].Account_Name.id },
-                { label: "Account Name", value: crmContact.data.statusMessage.data['0'].Account_Name.name },
-                { label: "Became Client", value: crmContact.data.statusMessage.data['0'].Became_Client },
-                { label: "Phone Number", value: crmContact.data.statusMessage.data['0'].Phone },
-                { label: "SBA Buildout", value: crmContact.data.statusMessage.data['0'].SBA_Buildout },
-                { label: "Workflow Run URL", value: crmContact.data.statusMessage.data['0'].WorkFlow_Run_URL },
-                { label: "Sales Person", value: crmContact.data.statusMessage.data['0'].Sales_Person },
-                { label: "Account Status", value: crmContact.data.statusMessage.data['0'].Status },
-                { label: "Account Type", value: crmContact.data.statusMessage.data['0'].Type }
-            ];
+function getCRMRelatedList(module, recordId, relation) {
 
-            let html = `<div class="table-responsive table-detail overflow-hidden">
-                            <table class="table">
-                                <tbody>`;
-            contactData.forEach(data => {
-                html += `
-                <tr>
-	                <td class="table-label">${data.label}</td>
-	                <td class="table-value">${data.value}</td>
-                </tr>
+
+    let endpoint = `https://www.zohoapis.com/crm/v3/${module}/${recordId}/${relation}`;
+    console.log('EP', endpoint)
+    let connection = 'sba_functions_v3';
+    let action = 'GET';
+    let fields = ['EFIN']
+    var parameters = {
+        url: endpoint,
+        headers: { 'Content-Type': 'application/json' },
+        type: action,
+        postBody: {},
+        data: { 'fields': 'EFIN' },
+        connectionLinkName: connection,
+        responseType: "json",
+    };
+    return ZOHODESK.request(parameters)
+
+}
+
+function searchForCRMEfin(accountId, efinType) {
+    let endpoint = `https://www.zohoapis.com/crm/v3/EFINs/search?criteria=((Account_Name:equals:${accountId})and(EFIN_Type:equals:${efinType}))`;
+    console.log(endpoint)
+    let connection = 'sba_functions_v3';
+    let action = 'GET';
+
+    var parameters = {
+        url: endpoint,
+        headers: { 'Content-Type': 'application/json' },
+        type: action,
+        postBody: {},
+        data: {},
+        connectionLinkName: connection,
+        responseType: "json",
+    };
+
+    return ZOHODESK.request(parameters)
+}
+
+function searchForCRMContact(lastName, firstName) {
+    const firstLetter = firstName[0];
+    let endpoint = `https://www.zohoapis.com/crm/v3/Contacts/search?criteria=((Last_Name:equals:${lastName})and(First_Name:starts_with:${firstLetter}))`;
+    console.log(endpoint)
+    let connection = 'sba_functions_v3';
+    let action = 'GET';
+
+    var parameters = {
+        url: endpoint,
+        headers: { 'Content-Type': 'application/json' },
+        type: action,
+        postBody: {},
+        data: {},
+        connectionLinkName: connection,
+        responseType: "json",
+    };
+
+    return ZOHODESK.request(parameters)
+}
+
+
+
+function renderEfinHTML(name, accountId, accountName, company, efinType, type, email, master, software, svbUser, svbLogin, softwareLogin, softwareUser, taxYear) {
+    let efinData = [
+      { label: "EFIN", value: name },
+      { label: "Account ID", value: accountId },
+      { label: "Account Name", value: accountName },
+      { label: "Company", value: company },
+      { label: "EFIN Type", value: efinType },
+      { label: "Type", value: type },
+      { label: "Email", value: email },
+      { label: "Master", value: master },
+      { label: "SW", value: software },
+      { label: "SVB User", value: svbUser },
+      { label: "SVB Login", value: svbLogin },
+      { label: "SW Login", value: softwareLogin },
+      { label: "SW User", value: softwareUser },
+      { label: "Tax Year", value: taxYear }
+    ];
+
+    let html = `<div class="table-responsive table-detail overflow-hidden">
+    <table class="table">
+        <tbody>
+        `;
+
+        efinData.forEach(data => {
+            html += `
+              <tr>
+                <td class="table-label">${data.label}</td>
+                <td class="table-value">${typeof data.value === 'string' && data.value.startsWith('https') ? 
+                  `<span>
+                    <a href="${data.value}" target="_blank" title="Open URL"><i class="fa fa-external-link"></i></a>
+                    <button onclick="copyToClipboard('${data.value}', this)" title="Copy URL to clipboard"><i class="fa fa-copy"></i></button>
+                    <span class="tooltiptext">Link copied to clipboard</span>
+                  </span>` : data.value}
+                </td>
+              </tr>
             `;
-            });
+          });
 
-            html += `</tbody></table></div>`
-            clearBreadcrumbsPastHome();
-            addAndSetActiveBreadcrumb('CRM Info');
-            document.getElementById('content-container').innerHTML = html;
-        })
-        .catch(error => {
-
-            console.error('Error desk CRM contact:', error);
-            displayErrorAlert('Function Failure.. ' + error.message);
-
-        });
+        html += `</tbody></table></div>`
+        addAndSetActiveBreadcrumb(`${name}`, true)
+        document.getElementById('content-container').innerHTML = html;
 }
 
-function getDeskContactIdFromTicket() {
-    return ZOHODESK.get('ticket.contactId').then(response => {
-        return response['ticket.contactId'];
-    });
-}
+
+
+
+
+
 
 function setupInitalOptions() {
 
@@ -358,7 +373,11 @@ function setupInitalOptions() {
     getDeskContactIdFromTicket().then(deskContactId => {
         // Look up that user in zoho desk
         getDeskContact(deskContactId).then(deskContact => {
+
+            
+
             deskContactGlobal = deskContact
+
             // Make sure conneciton is authorized
             if (deskContact.data.error_code == "1000") {
                 console.log('Authorize Connection:', deskContact.data.resumeUrl)
@@ -379,6 +398,13 @@ function setupInitalOptions() {
             }
             enableUILink('crmInfoListItem', 'crmInfoDescriptor', 'Ready to fetch..');
             enableUILink('crmEfinListItem', 'crmEfinDescriptor', 'Ready to fetch..');
+
+
+            if (deskContact.data.statusMessage.isEndUser != true){
+                displayErrorAlert('This contact is not a helpdesk end user and will not have access to the support portal. Do you want to invite them? Yes / Dismiss');
+            } else {
+                
+            }
 
         }).catch(error => {
             // Render error in popup if there's an issue with fetching deskContact
