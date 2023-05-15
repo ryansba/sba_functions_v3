@@ -5,49 +5,52 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 	<title>Zoho Desk - Apps</title>
 
-<!-- alert Stlye -->
-<style>
-	.alert {
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  font-size:.8rem;
-}
-</style>
-<style>
-
-.tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 8px;
-  background-color: #333;
-  color: #fff;
-  border-radius: 4px;
-  font-size: 14px;
-  z-index: 9999;
-}
-</style>
+	<!-- alert Stlye -->
 	<style>
-
-
+		.alert {
+			word-wrap: break-word;
+			white-space: pre-wrap;
+			font-size: .8rem;
+		}
+	</style>
+	<style>
+		.tooltip {
+			position: absolute;
+			bottom: 100%;
+			left: 50%;
+			transform: translateX(-50%);
+			padding: 4px 8px;
+			background-color: #333;
+			color: #fff;
+			border-radius: 4px;
+			font-size: 14px;
+			z-index: 9999;
+		}
+	</style>
+	<style>
 		body {
 			background-color: #f8f9fa;
 			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 		}
-		.status-attr{
-			font-weight:600;
+
+		.status-attr {
+			font-weight: 600;
 		}
-		#status-header{
+
+		#status-header {
 			background-color: #f8f9fa;
-			font-size:.8rem;
-			width:100%;
+			font-size: .8rem;
+			width: 100%;
 		}
+
 		.content {
 			padding: .5rem;
 			background-color: #ffffff;
@@ -56,39 +59,94 @@
 		}
 
 
-    .table-label {
-      max-width: 50px;
-      text-align: left;
-      margin-right: 0.5rem;
-	  overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .table-value {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 100px;
-    }
-    
-	.table-detail {
-		font-size:.8rem!important;
-	}
+		.table-label {
+			max-width: 50px;
+			text-align: left;
+			margin-right: 0.5rem;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 
-.list-group-options {
-  	width: 100%;
+		.table-value {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100px;
+		}
+
+		.table-detail {
+			font-size: .8rem !important;
+		}
+
+		.list-group-options {
+			width: 100%;
+		}
+
+		table {
+			max-width: none;
+			width: auto;
+
+		}
+
+		.breadcrumb a {
+			text-decoration: none;
+		}
+
+		.modal-sheet .modal-dialog {
+
+			transition: bottom .75s ease-in-out;
+		}
+
+		.modal-sheet .modal-footer {
+			padding-bottom: 2rem;
+		}
+
+		/* .modal-body > h5 {
+	font-size:.8rem;
+} */
+
+		.modal-body>p,
+		h5,
+		button {
+			font-size: .8rem !important;
+		}
+
+		#modalChoice {
+			margin: auto;
+		}
+
+		#searchInput {
+			width: 100%;
+			padding: 8px;
+			margin-top: 10px;
+			margin-bottom: 10px;
+			box-sizing: border-box;
+			border-radius: 0.25rem;
+			display: none;
+		}
+
+		#searchResults {
+			max-height: 200px;
+			overflow-y: auto;
+		}
+
+		#searchResults p {
+			padding: 1px;
+			margin: 1px;
+			/* border-bottom: 1px solid #ddd; */
+			font-size: .8rem;
+		}
+
+		#searchResults p:hover {
+			background-color: #ddd;
+		}
+		.selected {
+  background-color: yellow;
+  /* Add any other styles you want to apply to the selected element */
 }
 
-table {
-  max-width: none;
-  width:auto;
-
-}
-.breadcrumb a {
-    text-decoration: none;
-}
-
-
+		.spinner-border {display:none;}
 	</style>
 </head>
 
@@ -97,41 +155,88 @@ table {
 
 	<div id="alert-container"></div>
 
+	<div class="modal fade" tabindex="-1" role="dialog" id="modalChoice">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content rounded-3 shadow">
+				<div class="modal-body p-2 ">
 
+					<!-- Heading / Text  -->
+					<h5 class="mb-0 mt-2 text-center"></h5>
+					<p class="mb-0 mt-2 text-center"></p>
+
+					<!-- Spinner -->
+					<div class="text-center mt-2">
+						<div class="spinner-border" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</div>
+
+					<!-- Search -->
+					<input type="text" id="searchInput" class="mx-auto" placeholder="Search accounts...">
+					<div id="searchResults" class="searchResults"></div>
+				</div>
+
+				<!-- Footer -->
+				<div class="modal-footer flex-nowrap p-0">
+					<button type="button"
+						class="btn btn-lg btn-link text-decoration-none col-12 py-3 m-0 rounded-0 border-end"></button>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<!-- PRIOR TO SEARCH -->
+	<!-- <div class="modal fade" tabindex="-1" role="dialog" id="modalChoice">
+		<div class="modal-dialog" role="document">
+		  <div class="modal-content rounded-3 shadow">
+			<div class="modal-body p-2 text-center">
+			  <h5 class="mb-0 mt-2"></h5>
+			  <p class="mb-0 mt-2"></p>
+			</div>
+			<div class="modal-footer flex-nowrap p-0">
+			  <button type="button" class="btn btn-lg btn-link text-decoration-none col-12 py-3 m-0 rounded-0 border-end"></button>
+			</div>
+		  </div>
+		</div>
+	  </div> -->
 
 	<div class="container min-vh-95 d-flex flex-column">
 
 		<div class="row flex-grow-1">
-	
-				<div class="content">
-					<div id="status-header">
-						<p id="ticketNumber" class="status-attr"></p>
-						<p id="ticketContact" class="status-attr"></p>
+
+			<div class="content">
+				<div id="status-header">
+					<p id="ticketNumber" class="status-attr"></p>
+					<p id="ticketContact" class="status-attr"></p>
 				</div>
 				<nav aria-label="breadcrumb">
 					<ol id="breadcrumb-nav-list" class="breadcrumb">
-					  
+
 
 					</ol>
-				  </nav>
+				</nav>
 
-		<div id="content-container">
+				<div id="content-container">
 
-</div>
-</div>
 				</div>
 			</div>
 		</div>
+	</div>
+	</div>
 
-		<footer class="bg-dark text-white text-center py-3 mt-auto">
-			<p>Sticky Footer &copy; 2023</p>
-		</footer>
+	<footer class="bg-dark text-white text-center py-3 mt-auto">
+		<p>Sticky Footer &copy; 2023</p>
+	</footer>
 	</div>
 	<script src="./js/uitools.js"></script>
 	<script src="./js/zohoUtil.js"></script>
 	<script src="./js/extension.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+		crossorigin="anonymous"></script>
 	<script src="./js/registers.js"></script>
+	<script src="./js/modal.js"></script>
 </body>
 
 </html>

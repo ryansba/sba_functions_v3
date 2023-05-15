@@ -134,11 +134,11 @@ function resetUI() {
         </div>
       </a>
 
-      <a href="#" id="helpDeskListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
+      <a href="#" id="helpDeskListItem" class="list-group-item list-group-item-action d-flex gap-3 py-3 disabled" aria-current="true" disabled>
         <div class="d-flex gap-2 w-100 justify-content-between">
           <div>
             <h6 class="mb-0">HelpDesk</h6>
-            <p id="helpDeskDescriptor" class="mb-0 opacity-75">Helpdesk functions available</p>
+            <p id="helpDeskDescriptor" class="mb-0 opacity-75">Checking for user id...</p>
           </div>
         </div>
       </a>
@@ -168,6 +168,7 @@ function resetUI() {
   helpDeskLink.addEventListener("click", function (event) {
       event.preventDefault(); // Prevent the default navigation behavior
       console.log("helpDeskLink clicked!");
+      checkHelpDeskUserStatus();
   });
 
 }

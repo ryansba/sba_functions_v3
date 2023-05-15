@@ -1,6 +1,7 @@
 let zohoDeskInstance; // Declare a global variable to store the ZohoDesk instance
 let zohoCRMContactId;
 let deskContactGlobal;
+let helpDeskUserSearchResults;
 
 function registerEventListeners() {
     // On Ticket Shift (moving from one ticket to another in the left hand sidebar)
@@ -201,17 +202,21 @@ function getCRMInfo(module, recordId) {
 function getCRMContact() {
     return getCRMInfo('Contacts', zohoCRMContactId)
         .then(crmContact => {
-            console.log(crmContact)
+
+            let contactResult = crmContact.data.statusMessage.data['0']
+
+            console.log(contactResult)
+
             let contactData = [
-                { label: "Account ID", value: crmContact.data.statusMessage.data['0'].Account_Name.id },
-                { label: "Account Name", value: crmContact.data.statusMessage.data['0'].Account_Name.name },
-                { label: "Became Client", value: crmContact.data.statusMessage.data['0'].Became_Client },
-                { label: "Phone Number", value: crmContact.data.statusMessage.data['0'].Phone },
-                { label: "SBA Buildout", value: crmContact.data.statusMessage.data['0'].SBA_Buildout },
-                { label: "Workflow Run URL", value: crmContact.data.statusMessage.data['0'].WorkFlow_Run_URL },
-                { label: "Sales Person", value: crmContact.data.statusMessage.data['0'].Sales_Person },
-                { label: "Account Status", value: crmContact.data.statusMessage.data['0'].Status },
-                { label: "Account Type", value: crmContact.data.statusMessage.data['0'].Type }
+                { label: "Account ID", value: contactResult.Account_Name.id },
+                { label: "Account Name", value: contactResult.Account_Name.name },
+                { label: "Became Client", value: contactResult.Became_Client },
+                { label: "Phone Number", value: contactResult.Phone },
+                { label: "SBA Buildout", value: contactResult.SBA_Buildout },
+                { label: "Workflow Run URL", value: contactResult.WorkFlow_Run_URL },
+                { label: "Sales Person", value: contactResult.Sales_Person },
+                { label: "Account Status", value: contactResult.Status },
+                { label: "Account Type", value: contactResult.Type }
             ];
 
             let html = `<div class="table-responsive table-detail overflow-hidden">
@@ -242,18 +247,21 @@ function getCRMContact() {
 function getMasterEfins() {
     return getCRMInfo('Contacts', zohoCRMContactId)
         .then(crmContact => {
+
             let accountId = crmContact.data.statusMessage.data['0'].Account_Name.id;
 
             searchForCRMEfin(accountId, 'Master').then(masters => {
                 console.log(masters)
+
                 // Get count of Master EFINS 
                 // console.log('# Masters', masters.data.statusMessage.data.length);
                 // numberOfMasters = masters.data.statusMessage.data.length
 
+                // If there are no master EFINS found display an error
                 if (masters.data.statusMessage == "") {
                     disableUILink('crmEfinListItem', 'crmEfinDescriptor', 'No master found...')
-
                 }
+
                 // If only one Master just grab all the info and display it 
                 else if (masters.data.statusMessage.data.length == 1) {
                     let master = masters.data.statusMessage.data[0]
@@ -279,7 +287,6 @@ function getMasterEfins() {
 
                         html += `
                         <tr>
-
                         <td><button onclick="renderEfinHTML('${master.Name}', ${master.Account_Name.id}, '${master.Account_Name.name}', '${master.Company_Name}', '${master.EFIN_Type}', '${master.Type}', '${master.Email}', '${master.Master_EFIN_lu.name}', '${master.SVB_Software}', '${master.SVB_User_ID}', '${master.SVB_Login_URL}', '${master.Software_Login_URL}', '${master.Software_User_ID}', '${master.Tax_Year}')" title="Get info" style="border: none; background: none; padding: 0; cursor: pointer;">${master.Name}</button></td>
 
                             <td>${master.SVB_Software}</td>
@@ -295,10 +302,6 @@ function getMasterEfins() {
                     document.getElementById('content-container').innerHTML = html;
 
                 }
-
-
-
-
             });
 
         }).catch(error => {
@@ -346,10 +349,14 @@ function searchForCRMEfin(accountId, efinType) {
 
     return ZOHODESK.request(parameters)
 }
+// HALF
+// DYNAMIC
+function searchZohoCRM(module, criteria) {
 
-function searchForCRMContact(lastName, firstName) {
-    const firstLetter = firstName[0];
-    let endpoint = `https://www.zohoapis.com/crm/v3/Contacts/search?criteria=((Last_Name:equals:${lastName})and(First_Name:starts_with:${firstLetter}))`;
+    // ((Last_Name:equals:${lastName})and(First_Name:starts_with:${firstLetter}))
+
+
+    let endpoint = `https://www.zohoapis.com/crm/v3/${module}/search?criteria=${criteria}`;
     console.log(endpoint)
     let connection = 'sba_functions_v3';
     let action = 'GET';
@@ -366,6 +373,43 @@ function searchForCRMContact(lastName, firstName) {
 
     return ZOHODESK.request(parameters)
 }
+// HALF 
+// DYNAMIC
+
+
+
+async function getZohoCRM(module, fields, cvid, page = 1) {
+    let zohoApi = 'https://www.zohoapis.com/crm/v2/';
+    let endpoint = `${zohoApi}${module}?cvid=${cvid}&page=${page}`;
+  
+    let connection = 'sba_functions_v3';
+    let action = 'GET';
+  
+    var parameters = {
+      url: endpoint,
+      headers: { 'Content-Type': 'application/json' },
+      type: action,
+      postBody: {},
+      data: {},
+      connectionLinkName: connection,
+      responseType: "json",
+    };
+  
+    let response = await ZOHODESK.request(parameters);
+    
+    let records = response.data.statusMessage.data;
+  
+    // If there are more records, make a recursive call to fetch the next page
+    if (response.data.statusMessage.info.more_records) {
+      let nextPage = page + 1;
+      let moreRecords = await getZohoCRM(module, fields, cvid, nextPage);
+      // Append the newly fetched records to the ones we have so far
+      records = records.concat(moreRecords);
+    }
+  
+    return records;
+  }
+
 
 function renderEfinHTML(name, accountId, accountName, company, efinType, type, email, master, software, svbUser, svbLogin, softwareLogin, softwareUser, taxYear) {
     let efinData = [
@@ -410,16 +454,154 @@ function renderEfinHTML(name, accountId, accountName, company, efinType, type, e
         document.getElementById('content-container').innerHTML = html;
 }
 
+function checkHelpDeskUserStatus(){
+            //
+            // To do here - incorporate search feature into UI 
+            results = helpDeskUserSearchResults.data.statusMessage.data
+            let firstFoundEmail = results[0].emailAddress
+            let deskEmail = deskContactGlobal.data.statusMessage.email
+
+            if (firstFoundEmail == deskEmail) {
+                let centerUserId = results[0].id
+                
+                // Take the first result and get the help center user data 
+                getHelpCenterUser(centerUserId).then(userResult => {
+
+                // Get the groups that the member is a user of 
+                getHelpCenterUsersJoinedGroups(userResult.data.statusMessage.id).then(usersGroups => {
+
+                    joinedGroups = usersGroups.data.statusMessage.data
+
+                    // If the help center user is not a member of any groups 
+                    if(Array.isArray(joinedGroups) && joinedGroups.length === 0){
+
+                        //
+                        // Todo here - add invite option to UI
+                        //
+                        displayErrorAlert('Help center user is not a member of any groups...')
+                    }
+
+                    else{
+
+                        console.log('joinedGroups', joinedGroups)
+
+                    }
+                })
+                })
+            }
+
+            else {
+                displayErrorAlert('Contact is a helpcenter user but unable to find user with matching email')
+            }
+}
+
+function displaySearchResults(results) {
+    let resultsContainer = document.getElementById('searchResults');
+    resultsContainer.innerHTML = ''; // Clear previous results
+    let selectedElement = null; // Track the currently selected element
+  
+    for (let [index, result] of results.entries()) {
+      let resultElement = document.createElement('p');
+      resultElement.classList.add('accountP');
+      resultElement.textContent = result.Account_Name; // Replace 'name' with the actual property you want to display
+      resultElement.dataset.id = result.id; // Store the id in a data attribute
+      resultElement.dataset.position = index; // Store the position in a data attribute
+  
+      // Attach an event listener
+      resultElement.addEventListener('click', function(event) {
+        event.stopImmediatePropagation(); // Stop the event from propagating to other listeners
+  
+        console.log(this.dataset.id); // Logs the id when the element is clicked
+        console.log(this.dataset.position); // Logs the position when the element is clicked
+  
+        if (selectedElement !== null) {
+          selectedElement.classList.remove('selected'); // Remove the "selected" class from the previously selected element
+        }
+  
+        if (selectedElement === this) {
+          selectedElement = null; // Clear the selected element if it's clicked again
+        } else {
+          this.classList.add('selected'); // Add the "selected" class to the clicked element
+          selectedElement = this; // Update the selected element
+        }
+      });
+  
+      resultsContainer.appendChild(resultElement);
+    }
+  
+    document.querySelector('.modal-footer button').addEventListener('click', function(event) {
+      event.stopImmediatePropagation(); // Stop the event from propagating to other listeners
+      console.log('click');
+    });
+  }
+
+function showModal(id, title, content, buttonText) {
+    const modal = new Modal(id, title, content, buttonText);
+    modal.show();
+    return modal; // return the modal object for further manipulation
+}
+
+function step1FixAssociation(modal){
+    var spinner = document.querySelector('.spinner-border');
+    spinner.style.display = 'inline-block';
+    modal.disableButton();
+
+    let sbaAccountsCvid = '5199860000000723003';
+    let crmAccounts = [];
+
+    getZohoCRM('Accounts', '', sbaAccountsCvid).then(records => {
+        crmAccounts = records;
+        console.log(crmAccounts)
+        spinner.style.display = 'none';
+  
+        document.getElementById('searchInput').style.display = 'block';
+
+        displaySearchResults(crmAccounts);
+
+        modal.changeButtonText('Link to Account')
+        modal.enableButton();
+
+        document.getElementById('searchInput').addEventListener('input', function() {
+            let searchTerm = this.value.toLowerCase();
+            let results = crmAccounts.filter(account => {
+                return account.Account_Name.toLowerCase().includes(searchTerm);
+            });
+                displaySearchResults(results, modal);
+            }); 
+            
+            
+
+    });
+}
+
+function promptToFixDeskCrmAccountAssociation() {
+    let modal = showModal('modalChoice', 'CRM Account Not Linked', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi.', 'Start Search');
+  
+    // Remove the existing event listener, if any
+    document.querySelector('.modal-footer button').removeEventListener('click', handleButtonClick);
+  
+    // Add the event listener
+    document.querySelector('.modal-footer button').addEventListener('click', handleButtonClick);
+  
+    function handleButtonClick() {
+      step1FixAssociation(modal);
+    }
+  }
+  
+
 function setupInitalOptions() {
 
     resetUI();
     getCurrentTicketData();
 
+
     // Get the zoho desk contact's ID from the ticket 
     getDeskContactIdFromTicket().then(deskContactId => {
 
-        // Look up that user in zoho desk
+        // Look up that contact in zoho desk
         getDeskContact(deskContactId).then(deskContact => {
+
+            deskContactGlobal = deskContact
 
             // Make sure conneciton is authorized
             if (deskContact.data.error_code == "1000") {
@@ -427,14 +609,15 @@ function setupInitalOptions() {
                 displayErrorAlert('Authorize Connection.. ' + deskContact.data.resumeUrl);
             }
 
-            // Get the user's zohoCRMContactId 
-            else if (deskContact.data.statusMessage.zohoCRMContact) {
+            // Get the contact's zohoCRMContactId 
+            if (deskContact.data.statusMessage.zohoCRMContact) {
 
                 // Set the Global variable for zohoCRMContactId
                 zohoCRMContactId = deskContact.data.statusMessage.zohoCRMContact.id;
+                console.log('crm', zohoCRMContactId)
             }
 
-            // If user isnt synced try to get zoho contact id from custom field in desk
+            // If contact isnt synced try to get zoho contact id from custom field in desk
             else if (deskContact.data.statusMessage.cf.cf_zoho_contact_id) {
 
                 // Set the Global variable for zohoCRMContactId
@@ -445,10 +628,15 @@ function setupInitalOptions() {
             // To do here - incorporate search feature into UI 
             //
             // If zoho contact id field is null error out and display message 
-            else {
 
+            else {
+                
+
+                promptToFixDeskCrmAccountAssociation()
+                
                 // Set the Global variable for zohoCRMContactId
                 zohoCRMContactId = deskContact.data.statusMessage.zohoCRMContact.id
+
             }
 
             enableUILink('crmInfoListItem', 'crmInfoDescriptor', 'Ready to fetch..');
@@ -457,50 +645,32 @@ function setupInitalOptions() {
             // Check if the contact is an end user of the help center 
             if (deskContact.data.statusMessage.isEndUser != true){
 
-                // To do here - incorporate quick quto search feature into UI to make sure there isnt really an account
+                // To do here - incorporate quick auto search feature into UI to make sure there isnt really an account
                 // Add Invitation options to UI
                 // 
-                // If zoho contact id field is null error out and display message 
+                // 
                 displayErrorAlert('This contact is not a helpdesk end user and will not have access to the support portal.');
-
+                document.getElementById('helpDeskDescriptor').innerHTML = `Requires invitation...`
             } else {
 
                 // Search the for a help center user by the desk contacts email 
                 searchForHelpCenterUser('Email', deskContact.data.statusMessage.email).then(userSearchResults => {
 
-                    //
-                    // To do here - incorporate search feature into UI 
-                    //
-                    // Take the first result and get the help center user data 
-                    getHelpCenterUser(userSearchResults.data.statusMessage.data[0].id).then(userResult => {
+                    // Set the Global Variable up for later use
+                    helpDeskUserSearchResults = userSearchResults
+                    enableUILink('helpDeskListItem', 'helpDeskDescriptor', 'Ready to fetch..')
 
-                    // Get the groups that the member is a user of 
-                    getHelpCenterUsersJoinedGroups(userResult.data.statusMessage.id).then(usersGroups => {
-
-                        joinedGroups = usersGroups.data.statusMessage.data
-
-                        // If the help center user is not a member of any groups 
-                        if(Array.isArray(joinedGroups) && joinedGroups.length === 0){
-
-                            //
-                            // Todo here - add invite option to UI
-                            //
-                            displayErrorAlert('Help center user is not a member of any groups...')
-                        }
-                        else{
-                            console.log('joinedGroups', joinedGroups)
-                        }
-                    })
-                    })
                 })
 
             }
 
         }).catch(error => {
+
             // Render error in popup if there's an issue with fetching deskContact
             displayErrorAlert('Function Failure.. ' + error.message);
             document.getElementById('crmInfoDescriptor').innerHTML = `Not synced...`
-            document.getElementById('efinInfoDescriptor').innerHTML = `Not synced...`
+            document.getElementById('crmEfinDescriptor').innerHTML = `Not synced...`
+
         });
     });
 }
