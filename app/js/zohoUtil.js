@@ -35,7 +35,7 @@ function getLoggedInUserData() {
         .catch(error => {
             // Error Handling
             console.error('Error fetching user properties:', error);
-            displayErrorAlert('Function Failure..', error.message);
+            displayAlert('Function Failure..', error.message);
         });
 }
 
@@ -56,7 +56,7 @@ function getDepartments() {
         .catch(function (error) {
             // Error Handling
             console.error('Error fetching department list:', error);
-            displayErrorAlert('Function Failure..', error.message);
+            displayAlert('Function Failure..', error.message);
         });
 }
 
@@ -83,7 +83,7 @@ function getCurrentTicketData() {
             // Error Handling
             console.error('Error fetching ticket properties:', error);
 
-            displayErrorAlert('Function Failure. .' + error.message);
+            displayAlert('Function Failure. .' + error.message);
 
         });
 }
@@ -239,7 +239,7 @@ function getCRMContact() {
         .catch(error => {
 
             console.error('Error desk CRM contact:', error);
-            displayErrorAlert('Function Failure.. ' + error.message);
+            displayAlert('Function Failure.. ' + error.message);
 
         });
 }
@@ -306,24 +306,23 @@ function getMasterEfins() {
 
         }).catch(error => {
             console.error('Error desk CRM contact:', error);
-            displayErrorAlert('Function Failure.. ' + error.message);
+            displayAlert('Function Failure.. ' + error.message);
         });
 }
 
-function getCRMRelatedList(module, recordId, relation) {
+function getCRMRelatedList(module, recordId, relation, fields) {
 
 
     let endpoint = `https://www.zohoapis.com/crm/v3/${module}/${recordId}/${relation}`;
     console.log('EP', endpoint)
     let connection = 'sba_functions_v3';
     let action = 'GET';
-    let fields = ['EFIN']
     var parameters = {
         url: endpoint,
         headers: { 'Content-Type': 'application/json' },
         type: action,
         postBody: {},
-        data: { 'fields': 'EFIN' },
+        data: {'fields' : 'Last_Name,First_Name'},
         connectionLinkName: connection,
         responseType: "json",
     };
@@ -478,7 +477,7 @@ function checkHelpDeskUserStatus(){
                         //
                         // Todo here - add invite option to UI
                         //
-                        displayErrorAlert('Help center user is not a member of any groups...')
+                        displayAlert('Help center user is not a member of any groups...')
                     }
 
                     else{
@@ -491,15 +490,18 @@ function checkHelpDeskUserStatus(){
             }
 
             else {
-                displayErrorAlert('Contact is a helpcenter user but unable to find user with matching email')
+                displayAlert('Contact is a helpcenter user but unable to find user with matching email')
             }
 }
 
-function displaySearchResults(results) {
+
+
+function displaySearchResults(results, modal) {
     let resultsContainer = document.getElementById('searchResults');
     resultsContainer.innerHTML = ''; // Clear previous results
     let selectedElement = null; // Track the currently selected element
-  
+    modal.removeButtonClickListener();
+    modal.updateContent('Select an account to continue..')
     for (let [index, result] of results.entries()) {
       let resultElement = document.createElement('p');
       resultElement.classList.add('accountP');
@@ -528,10 +530,14 @@ function displaySearchResults(results) {
   
       resultsContainer.appendChild(resultElement);
     }
-  
-    document.querySelector('.modal-footer button').addEventListener('click', function(event) {
-      event.stopImmediatePropagation(); // Stop the event from propagating to other listeners
-      console.log('click');
+    modal.enableButton();
+
+    modal.changeButtonText('Link to this Account')
+
+    modal.setButtonClickListener(function() {
+        let account = results[document.querySelector('.accountP.selected').dataset.position]
+        console.log(account)
+        step2FixAssVerifyAccount(modal, account)
     });
   }
 
@@ -542,8 +548,12 @@ function showModal(id, title, content, buttonText) {
 }
 
 function step1FixAssociation(modal){
+
+
     var spinner = document.querySelector('.spinner-border');
     spinner.style.display = 'inline-block';
+
+    modal.updateContent('Pulling list of all active customers from CRM...')
     modal.disableButton();
 
     let sbaAccountsCvid = '5199860000000723003';
@@ -556,10 +566,9 @@ function step1FixAssociation(modal){
   
         document.getElementById('searchInput').style.display = 'block';
 
-        displaySearchResults(crmAccounts);
+        displaySearchResults(crmAccounts, modal);
 
-        modal.changeButtonText('Link to Account')
-        modal.enableButton();
+
 
         document.getElementById('searchInput').addEventListener('input', function() {
             let searchTerm = this.value.toLowerCase();
@@ -570,23 +579,168 @@ function step1FixAssociation(modal){
             }); 
             
             
-
+    
     });
 }
 
-function promptToFixDeskCrmAccountAssociation() {
-    let modal = showModal('modalChoice', 'CRM Account Not Linked', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi.', 'Start Search');
-  
-    // Remove the existing event listener, if any
-    document.querySelector('.modal-footer button').removeEventListener('click', handleButtonClick);
-  
-    // Add the event listener
-    document.querySelector('.modal-footer button').addEventListener('click', handleButtonClick);
-  
-    function handleButtonClick() {
-      step1FixAssociation(modal);
+
+function step2FixAssVerifyAccount(modal, account){
+    console.log('fix ver ass step 2', modal, account)
+    console.log('type', typeof account)
+    modal.updateTitle('Verify Account')
+    modal.updateContent('If this is the correct account, click link account again below...')
+
+    let html = `<div class="table-responsive table-detail overflow-hidden">
+    <table class="table">
+        <tbody>
+        `;
+
+    let fieldsToShow = ['Account_Name', 'Became_Client', 'Billing_City', 'Billing_State', 'Onboarding_Portal', 'SBA_Buildout', 'Phone', 'Type', 'Status', 'Unique_Identifier'];
+
+    for (let field in account){
+        if (fieldsToShow.includes(field)){
+            let value = account[field];
+            html += `
+              <tr>
+                <td class="table-label">${field}</td>
+                <td class="table-value">${typeof value === 'string' && value.startsWith('https') ? 
+                  `<span>
+                    <a href="${value}" target="_blank" title="Open URL"><i class="fa fa-external-link"></i></a>
+                    <button onclick="copyToClipboard('${value}', this)" title="Copy URL to clipboard"><i class="fa fa-copy"></i></button>
+                    <span class="tooltiptext">Link copied to clipboard</span>
+                  </span>` : value}
+                </td>
+              </tr>
+            `;
+        }
     }
-  }
+
+    html += `</tbody></table></div>`
+
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('searchInput').style.display = 'none';
+    document.getElementById('accountPlaceholder').innerHTML = html
+
+    modal.removeButtonClickListener();
+    modal.setButtonClickListener(function() {
+
+        step3FixAssLinkTheAccount(modal, account['id']);
+      });
+    // // addAndSetActiveBreadcrumb(`${name}`, true)
+    // document.getElementById('content-container').innerHTML = html;
+}
+
+
+
+function step3FixAssLinkTheAccount(modal, crmAccountId) {
+
+
+    let customFields = {
+        "cf" : {"cf_zoho_account_id" : crmAccountId }
+    };
+
+      updateDeskData('contacts', deskContactGlobal.data.statusMessage.id, customFields)
+
+      getCRMRelatedList('Accounts', crmAccountId, 'Contacts').then(response => {
+        console.log(response)
+
+        if (response.data.statusMessage == "") {
+            
+        }
+        else {step4FixAssLinkContact(modal, response.data.statusMessage.data)}
+    })  
+    
+};
+
+function step4FixAssLinkContact(modal, contacts) {
+
+    modal.updateTitle('Verify Contact')
+    modal.updateContent('If this is the correct contact, click link account again below...')
+
+    let html = `<div class="table-responsive table-detail overflow-hidden">
+    <table class="table">
+        <tbody>
+        `;
+
+    console.log(contacts)
+
+    for (let contact in contacts){
+        for (let field in contacts[contact]){
+            let value = contacts[contact][field];
+            
+            html += `
+            <tr>
+              <tr>
+                <td class="table-label">${field}</td>
+                <td class="table-value">${typeof value === 'string' && value.startsWith('https') ? 
+                  `<span>
+                    <a href="${value}" target="_blank" title="Open URL"><i class="fa fa-external-link"></i></a>
+                    <button onclick="copyToClipboard('${value}', this)" title="Copy URL to clipboard"><i class="fa fa-copy"></i></button>
+                    <span class="tooltiptext">Link copied to clipboard</span>
+                  </span>` : value}
+                </td>
+              </tr></tr>
+            `;
+    }
+}
+
+    html += `</tbody></table></div>`
+    document.getElementById('accountPlaceholder').innerHTML = html
+    modal.removeButtonClickListener();
+    modal.setButtonClickListener(function() {
+        let customFields = {
+            "cf" : {"cf_zoho_contact_id" : contacts[0].id }
+        };
+        console.log('cf', customFields)
+        updateDeskData('contacts', deskContactGlobal.data.statusMessage.id, customFields)
+            document.getElementById('accountPlaceholder').innerHTML = ''
+            modal.updateTitle('Success');
+            modal.updateContent('');
+            modal.changeButtonText('');
+            modal.disableButton();
+            resetUI();
+      });
+
+    
+
+};
+
+
+function updateDeskData(module, recordId, params){
+
+    let sampleRequestObj = {
+        url :`https://desk.zoho.com/api/v1/${module}/${recordId}`,
+        type :"PATCH",
+        postBody : params,
+        headers : {
+            "Content-Type" :"application/json" 
+        },
+        connectionLinkName :"sba_functions_v3",
+        responeType :"json"
+    }
+    
+    ZOHODESK.request(sampleRequestObj).then(res=>{
+        console.log(res)
+        // Implement your logic here
+        }, (error)=>{
+            console.log(error)
+        // Implement your logic here		
+    })
+
+}
+
+
+function promptToFixDeskCrmAccountAssociation() {
+    let modal = showModal('modalChoice', 'CRM Account Not Linked', 'Click start search to find account.', 'Start Search');
+
+    // Remove the existing event listener, if any
+    modal.removeButtonClickListener();
+
+    // Add the event listener
+    modal.setButtonClickListener(function() {
+      step1FixAssociation(modal);
+    });
+}
   
 
 function setupInitalOptions() {
@@ -603,10 +757,12 @@ function setupInitalOptions() {
 
             deskContactGlobal = deskContact
 
+            console.log(deskContactGlobal)
+
             // Make sure conneciton is authorized
             if (deskContact.data.error_code == "1000") {
                 console.log('Authorize Connection:', deskContact.data.resumeUrl)
-                displayErrorAlert('Authorize Connection.. ' + deskContact.data.resumeUrl);
+                displayAlert('Authorize Connection.. ' + deskContact.data.resumeUrl);
             }
 
             // Get the contact's zohoCRMContactId 
@@ -619,9 +775,19 @@ function setupInitalOptions() {
 
             // If contact isnt synced try to get zoho contact id from custom field in desk
             else if (deskContact.data.statusMessage.cf.cf_zoho_contact_id) {
-
+                displayAlert(
+                    'INFO: Contact was manually synced via app. ', 
+                    'info', 
+                    'Change Association', 
+                    '#', 
+                    function() { 
+                        promptToFixDeskCrmAccountAssociation(); 
+                    }
+                );
                 // Set the Global variable for zohoCRMContactId
-                zohoCRMContactId = deskContact.data.statusMessage.cf_zoho_contact_id.id;
+                zohoCRMContactId = deskContact.data.statusMessage.cf.cf_zoho_contact_id;
+
+                console.log('desk', zohoCRMContactId)
             }
 
             //
@@ -649,7 +815,7 @@ function setupInitalOptions() {
                 // Add Invitation options to UI
                 // 
                 // 
-                displayErrorAlert('This contact is not a helpdesk end user and will not have access to the support portal.');
+                displayAlert('This contact is not a helpdesk end user and will not have access to the support portal.');
                 document.getElementById('helpDeskDescriptor').innerHTML = `Requires invitation...`
             } else {
 
@@ -667,7 +833,7 @@ function setupInitalOptions() {
         }).catch(error => {
 
             // Render error in popup if there's an issue with fetching deskContact
-            displayErrorAlert('Function Failure.. ' + error.message);
+            displayAlert('Function Failure.. ' + error.message);
             document.getElementById('crmInfoDescriptor').innerHTML = `Not synced...`
             document.getElementById('crmEfinDescriptor').innerHTML = `Not synced...`
 

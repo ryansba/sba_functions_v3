@@ -1,22 +1,44 @@
-function displayErrorAlert(errorMessage) {
-    const alertContainer = document.getElementById('alert-container');
-    
-    // Create a new Bootstrap 5 alert element
-    const alertElement = document.createElement('div');
-    alertElement.className = 'alert alert-danger alert-dismissible fade show';
-    alertElement.setAttribute('role', 'alert');
-    alertElement.innerHTML = errorMessage;
-    
-    // Add a close button to the alert
-    const closeButton = document.createElement('button');
-    closeButton.type = 'button';
-    closeButton.className = 'btn-close';
-    closeButton.setAttribute('data-bs-dismiss', 'alert');
-    closeButton.setAttribute('aria-label', 'Close');
-    
-    alertElement.appendChild(closeButton);
-    alertContainer.appendChild(alertElement);
+function displayAlert(message, alertType = 'danger', linkText = null, linkUrl = null, clickHandler = null) {
+  const alertContainer = document.getElementById('alert-container');
+  
+  // Create a new Bootstrap 5 alert element
+  const alertElement = document.createElement('div');
+  alertElement.className = `alert alert-${alertType} alert-dismissible fade show`;
+  alertElement.setAttribute('role', 'alert');
+  
+  // Add the alert message
+  alertElement.innerHTML = message;
+  
+  // If link text and URL were provided, add a link to the alert
+  if (linkText && linkUrl) {
+      const linkElement = document.createElement('a');
+      linkElement.href = linkUrl;
+      linkElement.text = linkText;
+      linkElement.className = 'alert-link';
+      // Add event listener if clickHandler function is provided
+      if(clickHandler && typeof clickHandler === "function") {
+          linkElement.addEventListener('click', clickHandler);
+      }
+      alertElement.appendChild(linkElement);
   }
+  
+  // Add a close button to the alert
+  const closeButton = document.createElement('button');
+  closeButton.type = 'button';
+  closeButton.className = 'btn-close';
+  closeButton.setAttribute('data-bs-dismiss', 'alert');
+  closeButton.setAttribute('aria-label', 'Close');
+  
+  alertElement.appendChild(closeButton);
+  alertContainer.appendChild(alertElement);
+}
+
+function clearAlerts() {
+  const alertContainer = document.getElementById('alert-container');
+  while (alertContainer.firstChild) {
+      alertContainer.removeChild(alertContainer.firstChild);
+  }
+}
 
 function renderHTML(where, what) {
   element = document.getElementById(where)
@@ -111,7 +133,7 @@ function addAndSetActiveBreadcrumb(text, addMastersBreadcrumb) {
 }
 
 function resetUI() {
-
+  clearAlerts() 
   document.getElementById('breadcrumb-nav-list').innerHTML = ''
 
   let html = `
